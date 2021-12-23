@@ -9,8 +9,8 @@ fn benchmark(c: &mut criterion::Criterion) {
     hashmap.insert(b"key4", b"value4");
     hashmap.insert(b"key5", b"value5");
 
-    c.bench_function("bytemap", |b| b.iter(|| criterion::black_box(&bytemap[b"key4"])));
-    c.bench_function("hashmap", |b| b.iter(|| criterion::black_box(hashmap[b"key4"])));
+    c.bench_function("bytemap_read", |b| b.iter(|| criterion::black_box(&bytemap[b"key4"])));
+    c.bench_function("hashmap_read", |b| b.iter(|| criterion::black_box(hashmap[b"key4"])));
 }
 
 criterion::criterion_group!(benches, benchmark);

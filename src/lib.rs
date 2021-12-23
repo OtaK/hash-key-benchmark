@@ -1,10 +1,11 @@
+
 #[derive(Debug, Default)]
 pub struct ByteMap<'a> {
     indexes: Vec<&'a [u8]>,
     values: Vec<&'a [u8]>,
 }
 
-impl ByteMap<'_> {
+impl<'a> ByteMap<'a> {
     pub fn new() -> Self {
         Self {
             indexes: vec![
@@ -23,27 +24,42 @@ impl ByteMap<'_> {
             ],
         }
     }
-}
 
+    pub fn get<K: AsRef<[u8]>>(&self, k: K) -> Option<&[u8]>{
+        self.indexes.iter().position(|k1| *k1 == k.as_ref()).map(|index| self.values[index])
+    }
 
-impl<S> std::ops::Index<S> for ByteMap<'_> where S: AsRef<[u8]> {
-    type Output = [u8];
-    fn index(&self, k: S) -> &Self::Output {
-        let index = self.indexes.iter().position(|k1| *k1 == k.as_ref()).unwrap();
-        self.values[index]
+    #[inline(always)]
+    pub fn set<K: 'a + AsRef<[u8]>, V: 'a + AsRef<[u8]>>(&'a mut self, k: &'a K, v: &'a V) -> &mut Self {
+        if let Some(found_index) = self.indexes.iter().position(|k1| *k1 == k.as_ref()) {
+            self.values[found_index] = v.as_ref();
+        } else {
+            self.indexes.push(k.as_ref());
+            self.values.push(v.as_ref());
+        }
+
+        self
     }
 }
 
+impl<S: AsRef<[u8]>> std::ops::Index<S> for ByteMap<'_> {
+    type Output = [u8];
 
-fn test() {
-    let bytemap = ByteMap::new();
-    let _t = &bytemap[b"key1"];
-    let mut hashmap = std::collections::HashMap::new();
-    hashmap.insert(b"key1", b"value1");
-    hashmap.insert(b"key2", b"value2");
-    hashmap.insert(b"key3", b"value3");
-    hashmap.insert(b"key4", b"value4");
-    hashmap.insert(b"key5", b"value5");
+    fn index(&self, index: S) -> &Self::Output {
+        &self.get(index).unwrap()
+    }
+}
 
+#[cfg(test)]
+mod test {
+    #[test]
+    fn stuff_works() {
+        let mut bytemap = super::ByteMap::new();
+        let _t = &bytemap.get(b"key1");
+        let bytemap = bytemap
+            .set(b"customkey1", b"customvalue1")
+            .set(b"customkey2", b"customvalue2");
 
+        bytemap.set(b"customkey3", b"customvalue3");
+    }
 }
